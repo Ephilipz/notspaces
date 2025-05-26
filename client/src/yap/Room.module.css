@@ -2,7 +2,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    padding: 0.2rem;
     flex-direction: column;
 }
 
@@ -20,6 +20,11 @@
     overflow: hidden;
 }
 
+.micButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .micButton::before {
     content: '';
     position: absolute;
@@ -33,16 +38,16 @@
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.micButton:hover {
+.micButton:hover:not(:disabled) {
     transform: translateY(-4px);
     background: #fdfcfb;
 }
 
-.micButton:hover::before {
+.micButton:hover:not(:disabled)::before {
     transform: scale(1);
 }
 
-.micButton:active {
+.micButton:active:not(:disabled) {
     transform: translateY(-2px);
     background: #fdfcfb;
 }
@@ -50,6 +55,17 @@
 .micButton.muted {
     background: #d4c4b7;
     color: #8c7b6f;
+}
+
+.status {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 8px 0;
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 @keyframes pulse {
@@ -66,13 +82,13 @@
     }
 }
 
-.micButton:not(.muted) {
+.micButton:not(.muted):not(:disabled) {
     animation: pulse 2s infinite;
     background: #49bcff;
     color: white;
 }
 
-.micButton:not(.muted)::after {
+.micButton:not(.muted):not(:disabled)::after {
     content: '';
     position: absolute;
     top: 0;
@@ -96,7 +112,7 @@
     }
 }
 
-.micButton.muted:hover {
+.micButton.muted:hover:not(:disabled) {
     box-shadow:
         0 15px 25px rgba(100, 116, 139, 0.2),
         0 8px 8px rgba(100, 116, 139, 0.15),
