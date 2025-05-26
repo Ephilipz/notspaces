@@ -1,0 +1,111 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Client-side build outputs
+client/dist/
+client/build/
+client/.vite/
+client/.next/
+client/out/
+
+# Server-side build outputs
+server/bin/
+server/pkg/
+server/*.exe
+server/*.exe~
+server/*.dll
+server/*.so
+server/*.dylib
+
+# Go specific
+server/go.sum
+server/vendor/
+server/*.test
+server/*.prof
+server/coverage.txt
+server/coverage.out
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+client/.env*
+server/.env*
+
+# Logs
+*.log
+logs/
+client/logs/
+server/logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+client/coverage/
+server/coverage/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+client/.cache/
+server/.cache/
+
+# Package manager lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Go module cache
+server/go.mod.sum
+
+# Client-side specific
+client/.eslintcache
+client/.parcel-cache/
+client/.solid/
+
+# Server-side specific
+server/air_tmp/
+server/tmp/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with sensitive data
+config.json
+config.yaml
+config.yml
+secrets.json 

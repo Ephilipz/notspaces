@@ -1,0 +1,9 @@
+body {
+  font-family: "Arial";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+  margin: 0;
+  height: 100vh;
+  color: #333;
+}
