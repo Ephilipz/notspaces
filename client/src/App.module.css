@@ -21,6 +21,11 @@
 	color: var(--foam);
 }
 
+.cardWrapper {
+	width: fit-content;
+	margin: auto;
+}
+
 .playingCard {
 	border: 2px solid var(--rose);
 	background: linear-gradient(var(--overlay), var(--pine));
@@ -36,6 +41,33 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
+}
+
+.cardWrapper:hover .playingCard {
+	color: var(--foam);
+	background: linear-gradient(var(--overlay), var(--love));
+	cursor: pointer;
+}
+
+.cardWrapper:hover p.indicator {
+	opacity: 1;
+	color: var(--love);
+	transform: translateY(0);
+	z-index: 10;
+}
+
+p.indicator {
+	transition: all 0.5s ease-in-out;
+	opacity: 0.2;
+	margin: 0;
+	color: var(--gold);
+	font-size: 3em;
+	font-weight: light;
+	text-align: center;
+	margin: auto;
+	margin-bottom: 10px;
+	transform: translateY(100%);
+	z-index: -10;
 }
 
 .playingCard svg * {

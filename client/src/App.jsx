@@ -1,6 +1,6 @@
 import styles from './App.module.css';
 import Room from './yap/Room';
-import { children, onCleanup, onMount } from 'solid-js';
+import { children, createSignal, onCleanup, onMount } from 'solid-js';
 
 function App() {
 	return (
@@ -12,17 +12,20 @@ function App() {
 				</h2>
 			</header>
 			<MouseTilt>
-				<div class={styles.playingCard}>
-					<div class={`${styles.corner} ${styles.topLeft}`}>
-						<span>A</span>
-						<MicSVG />
-					</div>
-					<div class={styles.center}>
-						<MicSVG />
-					</div>
-					<div class={`${styles.corner} ${styles.btmRight}`}>
-						<span>A</span>
-						<MicSVG />
+				<div class={styles.cardWrapper}>
+					<p class={styles.indicator}>Enter</p>
+					<div class={styles.playingCard}>
+						<div class={`${styles.corner} ${styles.topLeft}`}>
+							<span>A</span>
+							<MicSVG />
+						</div>
+						<div class={styles.center}>
+							<MicSVG />
+						</div>
+						<div class={`${styles.corner} ${styles.btmRight}`}>
+							<span>A</span>
+							<MicSVG />
+						</div>
 					</div>
 				</div>
 			</MouseTilt>
