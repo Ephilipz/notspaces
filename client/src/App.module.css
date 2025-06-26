@@ -1,19 +1,80 @@
 .header {
-  text-align: center;
+	text-align: center;
+	margin-bottom: 20vh;
 }
 
 .header h1 {
-  margin: 0;
-  font-size: 7rem;
+	font-size: 5em;
+	margin: 0;
+}
+
+.header h1 strong {
+	color: var(--rose);
 }
 
 .header h2 {
-  margin: 0;
-  margin-bottom: 0.5rem;
+	font-weight: 100;
+	color: var(--muted);
 }
 
-main {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 20px;
+.header h2 strong {
+	color: var(--foam);
+}
+
+.playingCard {
+	border: 2px solid var(--rose);
+	background: linear-gradient(var(--overlay), var(--pine));
+	height: 40vh;
+	width: 350px;
+	max-width: 80vw;
+	margin: auto;
+	border-radius: 1em;
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 6px 6px rgba(0, 0, 0, 0.15);
+	overflow: hidden;
+	position: relative;
+	color: var(--gold);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.playingCard svg * {
+	color: currentColor;
+	stroke: currentColor;
+}
+
+.playingCard .center svg {
+	height: 100px;
+	width: 100px;
+}
+
+.playingCard .corner {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 15px;
+	line-height: 1;
+	gap: 5px;
+}
+
+.playingCard .corner span {
+	font-weight: bold;
+	font-size: x-large;
+}
+
+.playingCard .corner svg {
+	width: 1.8em;
+	height: 1.8em;
+}
+
+.playingCard .topLeft {
+	top: 0;
+	left: 0;
+}
+
+.playingCard .btmRight {
+	bottom: 0;
+	right: 0;
+	transform: rotate(180deg);
 }

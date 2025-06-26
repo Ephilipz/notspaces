@@ -1,169 +1,168 @@
-import { createSignal, For, onMount } from 'solid-js';
+import { createSignal, For, onCleanup, onMount } from 'solid-js';
 import styles from './Room.module.css';
 
 export default function Room() {
-  const [tracks, setTracks] = createSignal([])
-  const [localStream, setLocalStream] = createSignal(null);
-  const [ws, setWs] = createSignal(null);
-  const [pc, setPc] = createSignal(null);
+	const [tracks, setTracks] = createSignal([])
+	const [localStream, setLocalStream] = createSignal(null);
+	const [ws, setWs] = createSignal(null);
+	const [pc, setPc] = createSignal(null);
 
-  const setupPeerConnection = async () => {
-    const _userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    setLocalStream(_userStream);
-    setPc(new RTCPeerConnection())
+	const setupPeerConnection = async () => {
+		setPc(new RTCPeerConnection())
+		pc().ontrack = function(event) {
+			console.log("Received track:", event.track, event.streams);
+			const stream = event.streams[0]
+			const id = stream.id
 
-    for (const track of _userStream.getTracks()) {
-      pc().addTrack(track, _userStream);
-    }
+			stream.onremovetrack = ({ track }) => {
+				setTracks(prev => prev.filter(item => item.id !== track.id));
+			};
 
-    pc().ontrack = function(event) {
-      console.log("Received track:", event.track, event.streams);
-      const stream = event.streams[0]
-      const id = stream.id
+			setTracks(prev => [
+				prev.filter(item => item.id !== id),
+				{ id: id, track: event.track, stream: stream }
+			])
 
-      stream.onremovetrack = ({ track }) => {
-        setTracks(prev => prev.filter(item => item.id !== track.id));
-      };
+		}
 
-      setTracks(prev => [
-        prev.filter(item => item.id !== id),
-        { id: id, track: event.track, stream: stream }
-      ])
+		// websocket connection
+		const _socket = new WebSocket('ws://localhost:8080/websocket');
+		setWs(_socket);
 
-    }
+		// send ICE candidate to server when we have a new one
+		pc().onicecandidate = (event) => {
+			const cand = event.candidate
+			if (!cand) return
 
-    // websocket connection
-    const _socket = new WebSocket('ws://localhost:8080/websocket');
-    setWs(_socket);
+			ws().send(JSON.stringify({
+				event: 'candidate',
+				data: JSON.stringify(cand)
+			}));
+		}
 
-    // send ICE candidate to server when we have a new one
-    pc().onicecandidate = (event) => {
-      const cand = event.candidate
-      if (!cand) return
+		ws().onmessage = async function(event) {
+			const msg = JSON.parse(event.data);
+			if (!msg) return
 
-      ws().send(JSON.stringify({
-        event: 'candidate',
-        data: JSON.stringify(cand)
-      }));
-    }
+			switch (msg.event) {
+				case 'offer':
+					let offer = JSON.parse(msg.data)
+					if (!offer)
+						return console.error("Failed to parse offer")
+					pc().setRemoteDescription(offer)
+					const answer = await pc().createAnswer()
+					pc().setLocalDescription(answer)
 
-    ws().onmessage = async function(event) {
-      const msg = JSON.parse(event.data);
-      if (!msg) return
+					ws().send(JSON.stringify({
+						event: 'answer',
+						data: JSON.stringify(answer)
+					}))
+					return
 
-      switch (msg.event) {
-        case 'offer':
-          let offer = JSON.parse(msg.data)
-          if (!offer)
-            return console.error("Failed to parse offer")
-          pc().setRemoteDescription(offer)
-          const answer = await pc().createAnswer()
-          pc().setLocalDescription(answer)
+				case 'candidate':
+					let cand = JSON.parse(msg.data)
+					if (!cand)
+						return console.error("Failed to parse candidate")
+					pc().addIceCandidate(cand)
+			}
+		}
 
-          ws().send(JSON.stringify({
-            event: 'answer',
-            data: JSON.stringify(answer)
-          }))
-          return
+		ws().onclose = () => {
+			console.log("WebSocket connection closed");
+			setWs(null);
+			setPc(null);
+			setTracks({});
+		}
+	}
 
-        case 'candidate':
-          let cand = JSON.parse(msg.data)
-          if (!cand)
-            return console.error("Failed to parse candidate")
-          pc().addIceCandidate(cand)
-      }
-    }
+	const addAudio = async () => {
+		const _userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+		setLocalStream(_userStream);
 
-    ws().onclose = () => {
-      console.log("WebSocket connection closed");
-      setWs(null);
-      setPc(null);
-      setTracks({});
-    }
-  }
+		for (const track of _userStream.getTracks()) {
+			pc().addTrack(track, _userStream);
+		}
+	}
 
-  onMount(() => {
-    setupPeerConnection();
-  })
+	const removeAudio = async () => {
+		for (const track of _userStream.getTracks()) {
+			pc().removeTrack(track)
+		}
+	}
 
-  return (
-    <div>
-      {localStream() &&
-        <Track stream={localStream()} muted />
-      }
+	onMount(() => {
+		setupPeerConnection();
+	})
 
-      <hr />
+	return (
+		<div>
+			{localStream() &&
+				<Track stream={localStream()} muted />
+			}
 
-      <h2>Others</h2>
-      <For each={tracks().filter(x => x.stream)}>{(item) =>
-        <Track stream={item.stream} track={item.track} key={item.id} />
-      }</For>
-    </div>
-  );
+			<button type="button" class="btn" onclick={addAudio}>Start Yapping</button>
+
+			<hr />
+
+			<h2>Others</h2>
+			<For each={tracks().filter(x => x.stream)}>{(item) =>
+				<Track stream={item.stream} track={item.track} key={item.id} />
+			}</For>
+		</div>
+	);
 }
 
 function Track(props) {
-  let el;
-  const volumeFunc = volumeFromStream(props.stream);
-  const [volume, setVolume] = createSignal(0);
+	let el;
+	const volumeFunc = volumeFromStream(props.stream)
+	const [volume, setVolume] = createSignal(0)
 
-  function updateVolume() {
-    const currentVolume = volumeFunc.getVolume();
-    setVolume(currentVolume);
-    requestAnimationFrame(updateVolume);
-  }
+	function updateVolume() {
+		const currentVolume = volumeFunc()
+		setVolume(currentVolume)
+		requestAnimationFrame(updateVolume)
+	}
 
-  onMount(() => {
-    if (el) {
-      el.srcObject = props.stream;
-      updateVolume();
-    }
-  });
+	onMount(() => {
+		if (el) {
+			el.srcObject = props.stream;
+			updateVolume();
+		}
+	});
 
-  return (
-    <div>
-      <img src="https://media.tenor.com/X1nlfLKP6toAAAAM/cat-eat.gif"
-        height="80px"
-        style={{
-          "border-radius": "50%",
-          "border": props.muted ? "none" : `2px solid rgba(0, 255, 0, ${volume()})`,
-          // glow effect
-          "box-shadow": props.muted ? "" : `0 0 10px rgba(0, 255, 0, ${volume() * 1.5})`,
-          transition: "border 1s, box-shadow 2s"
-        }} />
-      <audio
-        autoplay
-        controls={false}
-        muted={props.muted}
-        ref={el}
-      />
-      <p>Volume: {volume().toFixed(2)}</p>
-    </div>
-  )
+	return (
+		<div>
+			<p>{props.stream.id}</p>
+			<audio
+				autoplay
+				controls={false}
+				muted={props.muted}
+				ref={el}
+			/>
+			<p>Volume: {volume().toFixed(2)}</p>
+		</div>
+	)
 }
 
 // returns a signal from 0 to 1 based on the current volume
 function volumeFromStream(stream) {
-  if (!stream) return 0;
+	if (!stream) return 0;
 
-  const audioContext = new AudioContext()
-  const source = audioContext.createMediaStreamSource(stream)
-  const analyser = audioContext.createAnalyser()
-  analyser.fftSize = 256
+	const audioContext = new AudioContext()
+	const source = audioContext.createMediaStreamSource(stream)
+	const analyser = audioContext.createAnalyser()
+	source.connect(analyser)
 
-  source.connect(analyser);
+	const pcmData = new Float32Array(analyser.fftSize)
 
-  function getVolume() {
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(data);
-    const sum = data.reduce((a, b) => a + b, 0);
-    // Normalize to 0-1
-    const norm = sum / data.length / 128;
-    // if it's lower than 0.2 return 0
-    return norm < 0.2 ? 0 : norm;
-  }
+	const onFrame = () => {
+		analyser.getFloatFrequencyData(pcmData)
+		let sumSqr = 0.0
+		for (const amplitude of pcmData) {
+			sumSqr += amplitude * amplitude
+		}
+		return Math.sqrt(sumSqr / pcmData.length)
+	}
 
-  return {
-    getVolume,
-  }
+	return onFrame
 }
