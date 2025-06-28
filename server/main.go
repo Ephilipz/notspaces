@@ -155,11 +155,10 @@ func signalPeerConnections() { // nolint
 			offerString, err := json.Marshal(offer)
 			if err != nil {
 				log.Errorf("Failed to marshal offer to json: %v", err)
-
 				return true
 			}
 
-			log.Infof("Send offer to client: %v", offer)
+			log.Info("Send offer to client")
 
 			if err = peerConnections[i].websocket.WriteJSON(&websocketMessage{
 				Event: "offer",
@@ -265,7 +264,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 			return
 		}
 
-		log.Infof("Send candidate to client: %s", candidateString)
+		log.Info("Send candidate to client")
 
 		if writeErr := c.WriteJSON(&websocketMessage{
 			Event: "candidate",
@@ -277,7 +276,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 
 	// If PeerConnection is closed remove it from global list
 	peerConnection.OnConnectionStateChange(func(p webrtc.PeerConnectionState) {
-		log.Infof("Connection state change: %s", p)
+		log.Info("Connection state change")
 
 		switch p {
 		case webrtc.PeerConnectionStateFailed:
@@ -322,7 +321,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 	})
 
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
-		log.Infof("ICE connection state changed: %s", is)
+		log.Info("ICE connection state changed")
 	})
 
 	// Signal for the new PeerConnection
@@ -337,11 +336,8 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 			return
 		}
 
-		log.Infof("Got message: %s", raw)
-
 		if err := json.Unmarshal(raw, &message); err != nil {
 			log.Errorf("Failed to unmarshal json to message: %v", err)
-
 			return
 		}
 
@@ -354,7 +350,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 				return
 			}
 
-			log.Infof("Got candidate: %v", candidate)
+			log.Info("Got candidate")
 
 			if err := peerConnection.AddICECandidate(candidate); err != nil {
 				log.Errorf("Failed to add ICE candidate: %v", err)
@@ -369,13 +365,54 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 				return
 			}
 
-			log.Infof("Got answer: %v", answer)
+			log.Infof("Got answer")
 
 			if err := peerConnection.SetRemoteDescription(answer); err != nil {
 				log.Errorf("Failed to set remote description: %v", err)
-
 				return
 			}
+
+		// renegotiation from the client
+		case "offer":
+			offer := webrtc.SessionDescription{}
+			if err := json.Unmarshal([]byte(message.Data), &offer); err != nil {
+				log.Errorf("Failed to unmarshal json to offer: %v", err)
+				return
+			}
+
+			if err := peerConnection.SetRemoteDescription(offer); err != nil {
+				log.Errorf("Failed to set remote description: %v", err)
+				return
+			}
+
+			ans, err := peerConnection.CreateAnswer(nil)
+			if err != nil {
+				log.Errorf("Failed to create answer: %v", err)
+				return
+			}
+
+			if err = peerConnection.SetLocalDescription(ans); err != nil {
+				log.Errorf("Failed to set local description: %v", err)
+				return
+			}
+
+			log.Info("Done setting offer.\n\n")
+
+			// send answer to client
+			answerString, err := json.Marshal(ans)
+			if err != nil {
+				log.Errorf("Failed to marshal answer to json: %v", err)
+				return
+			}
+			log.Info("Send answer to client")
+			if err = c.WriteJSON(&websocketMessage{
+				Event: "answer",
+				Data:  string(answerString),
+			}); err != nil {
+				log.Errorf("Failed to write JSON: %v", err)
+				return
+			}
+
 		default:
 			log.Errorf("unknown message: %+v", message)
 		}

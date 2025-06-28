@@ -12,7 +12,7 @@ export default function Room() {
 		const _socket = new WebSocket('ws://localhost:8080/websocket');
 		setWs(_socket);
 
-		ws().onmessage = async function(event) {
+		ws().onmessage = async function (event) {
 			const msg = JSON.parse(event.data);
 			if (!msg) return
 
@@ -36,6 +36,14 @@ export default function Room() {
 					if (!cand)
 						return console.error("Failed to parse candidate")
 					pc().addIceCandidate(cand)
+					return
+
+				case 'answer':
+					const incomingAns = JSON.parse(msg.data)
+					if (!incomingAns)
+						return console.error("Failed to parse answer")
+					pc().setRemoteDescription(incomingAns)
+					return
 			}
 		}
 
@@ -43,13 +51,13 @@ export default function Room() {
 			console.log("WebSocket connection closed");
 			setWs(null);
 			setPc(null);
-			setTracks({});
+			setTracks([]);
 		}
 	}
 
 	const setupPeerConnection = async () => {
 		setPc(new RTCPeerConnection())
-		pc().ontrack = function(event) {
+		pc().ontrack = function (event) {
 			console.log("Received track:", event.track, event.streams);
 			const stream = event.streams[0]
 			const id = stream.id
@@ -78,11 +86,11 @@ export default function Room() {
 
 		// we want to renegotiate when the track is added
 		pc().onnegotiationneeded = async () => {
-			console.log("renegotiation intiated.")
-			pc().setLocalDescription(await pc().createOffer())
+			const offer = await pc().createOffer()
+			await pc().setLocalDescription(offer)
 			ws().send(JSON.stringify({
 				event: 'offer',
-				data: JSON.stringify(pc().localDescription)
+				data: JSON.stringify(offer)
 			}))
 		}
 	}
