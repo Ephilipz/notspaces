@@ -4,6 +4,10 @@ import { children, createSignal, onCleanup, onMount } from 'solid-js';
 
 function App() {
 	return (
+		<Room />
+	)
+
+	return (
 		<div>
 			<header class={styles.header}>
 				<h1>This is <strong>notspaces</strong></h1>

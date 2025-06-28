@@ -7,38 +7,10 @@ export default function Room() {
 	const [ws, setWs] = createSignal(null);
 	const [pc, setPc] = createSignal(null);
 
-	const setupPeerConnection = async () => {
-		setPc(new RTCPeerConnection())
-		pc().ontrack = function(event) {
-			console.log("Received track:", event.track, event.streams);
-			const stream = event.streams[0]
-			const id = stream.id
-
-			stream.onremovetrack = ({ track }) => {
-				setTracks(prev => prev.filter(item => item.id !== track.id));
-			};
-
-			setTracks(prev => [
-				prev.filter(item => item.id !== id),
-				{ id: id, track: event.track, stream: stream }
-			])
-
-		}
-
+	const setupWebsocket = async () => {
 		// websocket connection
 		const _socket = new WebSocket('ws://localhost:8080/websocket');
 		setWs(_socket);
-
-		// send ICE candidate to server when we have a new one
-		pc().onicecandidate = (event) => {
-			const cand = event.candidate
-			if (!cand) return
-
-			ws().send(JSON.stringify({
-				event: 'candidate',
-				data: JSON.stringify(cand)
-			}));
-		}
 
 		ws().onmessage = async function(event) {
 			const msg = JSON.parse(event.data);
@@ -75,6 +47,46 @@ export default function Room() {
 		}
 	}
 
+	const setupPeerConnection = async () => {
+		setPc(new RTCPeerConnection())
+		pc().ontrack = function(event) {
+			console.log("Received track:", event.track, event.streams);
+			const stream = event.streams[0]
+			const id = stream.id
+
+			stream.onremovetrack = ({ track }) => {
+				setTracks(prev => prev.filter(item => item.id !== track.id));
+			};
+
+			setTracks(prev => [
+				prev.filter(item => item.id !== id),
+				{ id: id, track: event.track, stream: stream }
+			])
+
+		}
+
+		// send ICE candidate to server when we have a new one
+		pc().onicecandidate = (event) => {
+			const cand = event.candidate
+			if (!cand) return
+
+			ws().send(JSON.stringify({
+				event: 'candidate',
+				data: JSON.stringify(cand)
+			}));
+		}
+
+		// we want to renegotiate when the track is added
+		pc().onnegotiationneeded = async () => {
+			console.log("renegotiation intiated.")
+			pc().setLocalDescription(await pc().createOffer())
+			ws().send(JSON.stringify({
+				event: 'offer',
+				data: JSON.stringify(pc().localDescription)
+			}))
+		}
+	}
+
 	const addAudio = async () => {
 		const _userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 		setLocalStream(_userStream);
@@ -91,7 +103,8 @@ export default function Room() {
 	}
 
 	onMount(() => {
-		setupPeerConnection();
+		setupWebsocket()
+		setupPeerConnection()
 	})
 
 	return (
