@@ -25,7 +25,23 @@ var (
 	peerConnections []peerConnectionState
 	trackLocals     map[string]*webrtc.TrackLocalStaticRTP
 
-	log = logging.NewDefaultLoggerFactory().NewLogger("sfu-ws")
+	log          = logging.NewDefaultLoggerFactory().NewLogger("sfu-ws")
+	webrtcConfig = webrtc.Configuration{
+		SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{
+					"stun:stun.l.google.com:19302",
+				},
+			},
+			{
+				URLs: []string{
+					"stun:stun.l.google.com:443?transport=udp",
+					"stun:stun.l.google.com:443?transport=tcp",
+				},
+			},
+		},
+	}
 )
 
 type websocketMessage struct {
@@ -224,7 +240,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 	defer c.Close() //nolint
 
 	// Create new PeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	peerConnection, err := webrtc.NewPeerConnection(webrtcConfig)
 	if err != nil {
 		log.Errorf("Failed to creates a PeerConnection: %v", err)
 
@@ -357,6 +373,8 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 
 				return
 			}
+
+		// answer from the client. We need
 		case "answer":
 			answer := webrtc.SessionDescription{}
 			if err := json.Unmarshal([]byte(message.Data), &answer); err != nil {
@@ -373,6 +391,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) { // nolint
 			}
 
 		// renegotiation from the client
+		// the server should be "impolite"; ignoring incoming offers that collide with its own
 		case "offer":
 			offer := webrtc.SessionDescription{}
 			if err := json.Unmarshal([]byte(message.Data), &offer); err != nil {

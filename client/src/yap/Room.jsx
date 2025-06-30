@@ -2,47 +2,61 @@ import { createSignal, For, onCleanup, onMount } from 'solid-js';
 import styles from './Room.module.css';
 
 export default function Room() {
+
 	const [tracks, setTracks] = createSignal([])
 	const [localStream, setLocalStream] = createSignal(null);
 	const [ws, setWs] = createSignal(null);
+
+	// peerconnection data
+	// the client is always the polite peer. the server is the impolite peer
 	const [pc, setPc] = createSignal(null);
+	const pcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+	let makingOffer = false
+	let isSettingRemoteAnswerPending = false
 
 	const setupWebsocket = async () => {
 		// websocket connection
 		const _socket = new WebSocket('ws://localhost:8080/websocket');
 		setWs(_socket);
 
-		ws().onmessage = async function (event) {
+		ws().onmessage = async function(event) {
 			const msg = JSON.parse(event.data);
 			if (!msg) return
+			const payload = JSON.parse(msg.data)
 
 			switch (msg.event) {
 				case 'offer':
-					let offer = JSON.parse(msg.data)
-					if (!offer)
-						return console.error("Failed to parse offer")
-					pc().setRemoteDescription(offer)
-					const answer = await pc().createAnswer()
-					pc().setLocalDescription(answer)
+					try {
+						const offer = payload
+						await pc().setRemoteDescription(offer)
 
-					ws().send(JSON.stringify({
-						event: 'answer',
-						data: JSON.stringify(answer)
-					}))
+						// we use implicit description instead of manually creating an answer
+						await pc().setLocalDescription()
+						ws().send(JSON.stringify({
+							event: 'answer',
+							data: JSON.stringify(pc().localDescription)
+						}))
+					} catch (e) {
+						console.error('failed to set incoming offer', e, payload.sdp)
+					}
 					return
 
 				case 'candidate':
-					let cand = JSON.parse(msg.data)
-					if (!cand)
-						return console.error("Failed to parse candidate")
-					pc().addIceCandidate(cand)
+					let cand = payload
+					await pc().addIceCandidate(cand)
 					return
 
 				case 'answer':
-					const incomingAns = JSON.parse(msg.data)
-					if (!incomingAns)
-						return console.error("Failed to parse answer")
-					pc().setRemoteDescription(incomingAns)
+					try {
+						const incomingAns = payload
+
+						// idk why this is, but we set remote answer as pending until we update the remote desc. asynchronously
+						isSettingRemoteAnswerPending = true
+						await pc().setRemoteDescription(incomingAns)
+						isSettingRemoteAnswerPending = false
+					} catch (e) {
+						console.error('failed to set incoming answer', e, payload.sdp)
+					}
 					return
 			}
 		}
@@ -56,8 +70,8 @@ export default function Room() {
 	}
 
 	const setupPeerConnection = async () => {
-		setPc(new RTCPeerConnection())
-		pc().ontrack = function (event) {
+		setPc(new RTCPeerConnection(pcConfig))
+		pc().ontrack = function(event) {
 			console.log("Received track:", event.track, event.streams);
 			const stream = event.streams[0]
 			const id = stream.id
@@ -86,12 +100,16 @@ export default function Room() {
 
 		// we want to renegotiate when the track is added
 		pc().onnegotiationneeded = async () => {
-			const offer = await pc().createOffer()
-			await pc().setLocalDescription(offer)
-			ws().send(JSON.stringify({
-				event: 'offer',
-				data: JSON.stringify(offer)
-			}))
+			try {
+				makingOffer = true
+				await pc().setLocalDescription()
+				ws().send(JSON.stringify({
+					event: 'offer',
+					data: JSON.stringify(pc().localDescription)
+				}))
+			} finally {
+				makingOffer = false
+			}
 		}
 	}
 
