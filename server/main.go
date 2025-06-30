@@ -65,11 +65,11 @@ func main() {
 	http.HandleFunc("/websocket", websocketHandler)
 
 	// request a keyframe every 3 seconds
-	go func() {
-		for range time.NewTicker(time.Second * 3).C {
-			dispatchKeyFrame()
-		}
-	}()
+	// go func() {
+	// 	for range time.NewTicker(time.Second * 3).C {
+	// 		dispatchKeyFrame()
+	// 	}
+	// }()
 
 	// start HTTP server
 	if err := http.ListenAndServe(*addr, nil); err != nil { //nolint: gosec
@@ -81,6 +81,7 @@ func main() {
 func addTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP { // nolint
 	listLock.Lock()
 	defer func() {
+		time.Sleep(3 * time.Second)
 		listLock.Unlock()
 		signalPeerConnections()
 	}()
