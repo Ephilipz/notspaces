@@ -109,6 +109,14 @@ pre {
 	/* 2 */
 }
 
+h1 strong {
+	color: var(--foam);
+}
+
+.muted {
+	color: var(--muted);
+}
+
 /**
 Add the correct font size in all browsers.
 */
@@ -175,6 +183,20 @@ textarea {
 	/* 2 */
 }
 
+input {
+	background-color: var(--overlay);
+	border: none;
+	padding: 0.5em;
+	border-radius: 5px;
+	color: var(--text);
+	outline: none;
+}
+
+input:focus-visible,
+input:focus {
+	outline: 2px solid var(--iris);
+}
+
 hr {
 	background: var(--border);
 	border: none;
@@ -206,6 +228,8 @@ Style buttons
 	background: var(--surface);
 	color: var(--rose);
 	transition: all 0.4s ease-in-out;
+
+	cursor: pointer;
 }
 
 .btn:hover {

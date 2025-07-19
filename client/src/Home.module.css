@@ -1,6 +1,10 @@
 .header {
 	text-align: center;
-	margin-bottom: 20vh;
+	margin-bottom: 10vh;
+}
+
+.header hr {
+	margin: 2em;
 }
 
 .header h1 {
