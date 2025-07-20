@@ -219,17 +219,23 @@ button,
 Style buttons
 **/
 .btn {
-	border: none;
-	border-bottom: 1px solid var(--rose);
 	padding: 0.5em 1em;
 	border-radius: 0.2em;
 
 	/* theme */
+	border: none;
+	border-bottom: 1px solid var(--rose);
 	background: var(--surface);
 	color: var(--rose);
 	transition: all 0.4s ease-in-out;
 
 	cursor: pointer;
+}
+
+.btn.primary {
+	border-bottom: 2px solid var(--love);
+	background: var(--rose);
+	color: var(--bg);
 }
 
 .btn:hover {
@@ -308,6 +314,40 @@ summary {
 	display: list-item;
 }
 
+/*
+UI Elements
+===========
+*/
+.pill {
+	border-radius: 0.7em;
+	padding: 0.2em 0.7em;
+	display: block;
+	width: fit-content;
+	border: 1px solid currentColor;
+}
+
+.pill.info {
+	color: var(--iris);
+}
+
+.pill.attention {
+	color: var(--gold);
+}
+
+.pill.success {
+	color: var(--foam);
+}
+
+.glow {
+	box-shadow: var(--rose) 0 0 4em 0.4em;
+}
+
+.row {
+	display: flex;
+	flex-direction: row;
+	gap: 1em;
+	align-items: center;
+}
 
 /*
 Theme

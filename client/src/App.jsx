@@ -3,5 +3,5 @@ export default function App(props) {
 		<>
 			{props.children}
 		</>
-	);
-};
+	)
+}

@@ -1,27 +1,39 @@
-import { A } from '@solidjs/router';
-import styles from './Home.module.css';
-import { MouseTilt } from './MouseTilt';
-import Room from './yap/Room';
-import { createSignal, Show } from 'solid-js';
+import { A } from '@solidjs/router'
+import styles from './Home.module.css'
+import { MouseTilt } from './MouseTilt'
+import Room from './yap/Room'
+import { createSignal, Show } from 'solid-js'
 
 export default function Home() {
 	const [name, setName] = createSignal(localStorage.getItem('name') || null)
 	return (
 		<div>
 			<header class={styles.header}>
-				<h1>This is <strong>notspaces</strong></h1>
+				<h1>
+					This is
+					<strong>notspaces</strong>
+				</h1>
 				<h2>
-					You can speak, but don't <strong>yap</strong> too much.
+					You can speak, but don't
+					{' '}
+					<strong>yap</strong>
+					{' '}
+					too much.
 				</h2>
 				<hr />
-				<input autofocus placeholder='Enter your name' value={name()} oninput={(e) => {
-					setName(e.target.value)
-					localStorage.setItem('name', e.target.value)
-				}} />
+				<input
+					autofocus
+					placeholder="Enter your name"
+					value={name()}
+					onInput={(e) => {
+						setName(e.target.value)
+						localStorage.setItem('name', e.target.value)
+					}}
+				/>
 			</header>
 			<Show when={name() && name().length > 2}>
 				<MouseTilt>
-					<A href="/room" style={{ "text-decoration": 'none' }} aria-disabled={!name()}>
+					<A href="/room" style={{ 'text-decoration': 'none' }} aria-disabled={!name()}>
 						<div class={styles.cardWrapper}>
 							<p class={styles.indicator}>Enter</p>
 							<div class={styles.playingCard}>
@@ -42,7 +54,7 @@ export default function Home() {
 				</MouseTilt>
 			</Show>
 		</div>
-	);
+	)
 }
 
 function MicSVG() {

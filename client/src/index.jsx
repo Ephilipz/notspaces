@@ -1,10 +1,10 @@
 /* @refresh reload */
-import { render } from 'solid-js/web';
-import { Router, Route } from "@solidjs/router";
-import './index.css';
-import App from './App';
-import Home from './Home';
-import Room from './yap/Room';
+import { render } from 'solid-js/web'
+import { Router, Route } from '@solidjs/router'
+import './index.css'
+import App from './App'
+import Home from './Home'
+import Room from './yap/Room'
 
 function Routes() {
 	return (
@@ -15,4 +15,4 @@ function Routes() {
 	)
 }
 
-render(() => <Routes />, document.getElementById("root"));
+render(() => <Routes />, document.getElementById('root'))
