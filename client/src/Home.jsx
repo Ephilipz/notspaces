@@ -1,7 +1,6 @@
 import { A } from '@solidjs/router'
 import styles from './Home.module.css'
 import { MouseTilt } from './MouseTilt'
-import Room from './yap/Room'
 import { createSignal, Show } from 'solid-js'
 
 export default function Home() {
@@ -11,7 +10,7 @@ export default function Home() {
 			<header class={styles.header}>
 				<h1>
 					This is
-					<strong>notspaces</strong>
+					<strong> notspaces</strong>
 				</h1>
 				<h2>
 					You can speak, but don't

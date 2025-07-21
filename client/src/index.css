@@ -106,6 +106,7 @@ pre {
 		monospace;
 	/* 1 */
 	font-size: 1em;
+	white-space: pre;
 	/* 2 */
 }
 
@@ -319,11 +320,13 @@ UI Elements
 ===========
 */
 .pill {
-	border-radius: 0.7em;
-	padding: 0.2em 0.7em;
-	display: block;
+	display: flex;
+	align-items: center;
+	border-radius: 1em;
+	padding: 0.5em 0.7em;
 	width: fit-content;
-	border: 1px solid currentColor;
+	border: 1px dashed currentColor;
+	gap: 0.5em;
 }
 
 .pill.info {
@@ -347,6 +350,25 @@ UI Elements
 	flex-direction: row;
 	gap: 1em;
 	align-items: center;
+}
+
+.hcenter {
+	justify-content: center;
+}
+
+.pulse {
+  animation: pulse-animation 2s infinite;
+  box-shadow: 0px 0px 0.01px 0.01px currentColor;
+  border-radius: 50%;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px color-mix(currentcolor, transparent, 20%, 80%)
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent
+  }
 }
 
 /*

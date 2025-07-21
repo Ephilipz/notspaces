@@ -1,8 +1,11 @@
-import { createSignal, For, onCleanup, onMount } from 'solid-js'
+import { createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import styles from './Room.module.css'
+import Ascii from './ascii'
 
 const Room = () => {
 	const name = localStorage.getItem('name') || 'anon'
+	const [speakerState, setSpeakerState] = createSignal('muted')
+
 	const [localStream, setLocalStream] = createSignal(null)
 	const [remoteStreams, setRemoteStreams] = createSignal([])
 	let pc = new RTCPeerConnection()
@@ -10,8 +13,8 @@ const Room = () => {
 
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+		stream.getAudioTracks()[0].enabled = false
 		setLocalStream(stream)
-		toggleMute()
 		stream.getTracks().forEach(track => pc.addTrack(track, stream))
 
 		pc.ontrack = (event) => {
@@ -22,7 +25,7 @@ const Room = () => {
 			}
 		}
 
-		ws = new WebSocket(import.meta.env.VITE_API_URL + 'websocket')
+		ws = new WebSocket(import.meta.env.VITE_API_URL + 'websocket?name=' + name)
 
 		ws.onclose = () => {
 			stream.getTracks().forEach((track) => {
@@ -74,6 +77,7 @@ const Room = () => {
 
 	function toggleMute() {
 		localStream().getAudioTracks()[0].enabled = !localStream().getAudioTracks()[0].enabled
+		setSpeakerState(prev => prev === 'muted' ? 'speaking' : 'muted')
 	}
 
 	return (
@@ -85,22 +89,31 @@ const Room = () => {
 					{name}
 				</strong>
 			</h1>
-			<div class="row">
-				<span class="pill muted">
-					You are
-					{' '}
-					<strong>Muted</strong>
-				</span>
-				<button class="btn primary glow" onClick={toggleMute}>
-					Unmute
+			<div class="row hcenter">
+				<div class="pill" classList={{ muted: speakerState() === 'muted', attention: speakerState() === 'speaking' }}>
+					<svg width="20" height="20" classList={{ pulse: speakerState() === 'speaking' }}>
+						<circle cx="10" cy="10" r="8" fill="currentcolor" />
+					</svg>
+					<span>
+						You are
+						{' '}
+						<strong>{speakerState() === 'muted' ? 'Muted' : 'Speaking'}</strong>
+					</span>
+				</div>
+				<button class="btn primary" onClick={toggleMute} classList={{ glow: speakerState() === 'muted' }}>
+					{speakerState() === 'muted' ? 'Unmute' : 'Mute'}
 				</button>
 			</div>
 			<hr />
-			<p class="pill info">
+			<Show when={remoteStreams().length === 0}>
+				<p class="muted">You're here alone. Look at this beautiful art until someone joins</p>
+				<Ascii />
+			</Show>
+			<h3 class="muted">
 				<strong>{remoteStreams()?.length}</strong>
 				{' '}
 				Users Connected
-			</p>
+			</h3>
 			<div>
 				<For each={remoteStreams()}>
 					{stream => (
