@@ -4,6 +4,7 @@ import Ascii from './ascii'
 
 const Room = () => {
 	const name = localStorage.getItem('name') || 'anon'
+	const [id, setId] = createSignal('')
 	const [speakerState, setSpeakerState] = createSignal('muted')
 
 	const [localStream, setLocalStream] = createSignal(null)
@@ -58,7 +59,15 @@ const Room = () => {
 						return console.log('failed to parse candidate')
 					}
 					pc.addIceCandidate(candidate)
+					break
 				}
+				case 'id': {
+					const id = msg.data
+					setId(id)
+					break
+				}
+				default:
+					console.log('received message', msg)
 			}
 		}
 
