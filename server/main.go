@@ -61,7 +61,6 @@ type peerConnectionState struct {
 type connectedUser struct {
 	Id         uuid.UUID
 	Name       string
-	Connection *peerConnectionState
 }
 
 func main() {
@@ -201,7 +200,7 @@ func signalPeerConnections() {
 
 	for syncAttempt := 0; ; syncAttempt++ {
 		if syncAttempt == 25 {
-			// Release the lock and attempt a sync in 1 - 3 seconds. We might be blocking a RemoveTrack or AddTrack
+			// Release the lock and attempt a sync in 1 -> 3 seconds. We might be blocking a RemoveTrack or AddTrack
 			go func() {
 				time.Sleep(time.Duration(rand.IntN(3-1)+1) * time.Second)
 				signalPeerConnections()
@@ -285,7 +284,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: use the usermap to reference incoming connections
 	userId := uuid.New()
 	user := &connectedUser{
-		Connection: &pcState,
 		Id:         userId,
 		Name:       name,
 	}
@@ -476,6 +474,5 @@ type threadSafeWriter struct {
 func (t *threadSafeWriter) WriteJSON(v any) error {
 	t.Lock()
 	defer t.Unlock()
-
 	return t.Conn.WriteJSON(v)
 }
