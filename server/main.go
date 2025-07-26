@@ -27,7 +27,9 @@ var (
 	listLock sync.RWMutex
 
 	connections []peerConnectionState
+	// TODO: change to array
 	trackLocals map[string]*webrtc.TrackLocalStaticRTP
+	users       []connectedUser
 
 	log          = logging.NewDefaultLoggerFactory().NewLogger("sfu-ws")
 	webrtcConfig = webrtc.Configuration{
@@ -59,8 +61,8 @@ type peerConnectionState struct {
 }
 
 type connectedUser struct {
-	Id         uuid.UUID
-	Name       string
+	Id   uuid.UUID
+	Name string
 }
 
 func main() {
@@ -281,12 +283,22 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: use the usermap to reference incoming connections
-	userId := uuid.New()
 	user := &connectedUser{
-		Id:         userId,
-		Name:       name,
+		Id:   uuid.New(),
+		Name: name,
 	}
+	users = append(users, *user)
+
+	payload, _ := json.Marshal(map[any]any {
+		"id": user.Id,
+		"users": users,
+	})
+
+	// send the id back to the user
+	c.WriteJSON(&websocketMessage{
+		Event: "id",
+		Data: string(payload),
+	})
 
 	// Add our new PeerConnection to global list
 	listLock.Lock()
