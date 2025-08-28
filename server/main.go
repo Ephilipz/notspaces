@@ -5,6 +5,7 @@ import (
 	"flag"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"slices"
 	"sync"
 	"time"
@@ -18,8 +19,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type Config struct {
+	MaxConnections int `json:"maxConnections"`
+}
+
 var (
-	addr     = flag.String("addr", ":8080", "http service address")
+	addr    = flag.String("addr", ":8080", "http service address")
+	config  Config
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
@@ -32,7 +38,6 @@ var (
 
 	// Rate limiting
 	connectionLimiter = rate.NewLimiter(rate.Every(time.Second), 10) // 10 connections per second
-	maxConnections    = 100
 
 	log          = logging.NewDefaultLoggerFactory().NewLogger("sfu-ws")
 	webrtcConfig = webrtc.Configuration{
@@ -72,6 +77,10 @@ type connectedUser struct {
 func main() {
 	// Parse the flags passed to program
 	flag.Parse()
+
+	// Load config
+	data, _ := os.ReadFile("config.json")
+	json.Unmarshal(data, &config)
 
 	// Init other state
 	trackLocals = map[string]*webrtc.TrackLocalStaticRTP{}
@@ -274,7 +283,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	currentConnections := len(connections)
 	stateLock.RUnlock()
 
-	if currentConnections >= maxConnections {
+	if currentConnections >= config.MaxConnections {
 		http.Error(w, "Server at capacity", http.StatusServiceUnavailable)
 		return
 	}
