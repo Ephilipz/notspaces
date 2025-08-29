@@ -5,6 +5,7 @@ import (
 	"flag"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"slices"
 	"sync"
 	"time"
@@ -15,21 +16,28 @@ import (
 	"github.com/pion/rtcp"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
+	"golang.org/x/time/rate"
 )
 
+type Config struct {
+	MaxConnections int `json:"maxConnections"`
+}
+
 var (
-	addr     = flag.String("addr", ":8080", "http service address")
+	addr    = flag.String("addr", ":8080", "http service address")
+	config  Config
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
 
-	// lock for peerConnections and trackLocals
-	listLock sync.RWMutex
-
+	// Global state with proper synchronization
+	stateLock   sync.RWMutex
 	connections []peerConnectionState
-	// TODO: change to array
 	trackLocals map[string]*webrtc.TrackLocalStaticRTP
-	users       []connectedUser
+	users       map[uuid.UUID]*connectedUser // Changed to map for O(1) removal
+
+	// Rate limiting
+	connectionLimiter = rate.NewLimiter(rate.Every(time.Second), 10) // 10 connections per second
 
 	log          = logging.NewDefaultLoggerFactory().NewLogger("sfu-ws")
 	webrtcConfig = webrtc.Configuration{
@@ -58,6 +66,7 @@ type websocketMessage struct {
 type peerConnectionState struct {
 	peerConnection *webrtc.PeerConnection
 	websocket      *threadSafeWriter
+	userID         uuid.UUID // Track which user owns this connection
 }
 
 type connectedUser struct {
@@ -69,8 +78,13 @@ func main() {
 	// Parse the flags passed to program
 	flag.Parse()
 
+	// Load config
+	data, _ := os.ReadFile("config.json")
+	json.Unmarshal(data, &config)
+
 	// Init other state
 	trackLocals = map[string]*webrtc.TrackLocalStaticRTP{}
+	users = map[uuid.UUID]*connectedUser{}
 
 	// websocket handler
 	http.HandleFunc("/websocket", websocketHandler)
@@ -90,12 +104,12 @@ func main() {
 
 // Add to list of tracks and fire renegotation for all PeerConnections.
 func addTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	listLock.Lock()
+	stateLock.Lock()
 	defer func() {
 		// seems better to have a random delay between [100 and 300) milliseconds
 		delay := rand.Int32N(300-100) + 100
 		time.Sleep(time.Duration(delay) * time.Millisecond)
-		listLock.Unlock()
+		stateLock.Unlock()
 		signalPeerConnections()
 	}()
 
@@ -112,9 +126,9 @@ func addTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
 
 // Remove from list of tracks and fire renegotation for all PeerConnections.
 func removeTrack(t *webrtc.TrackLocalStaticRTP) {
-	listLock.Lock()
+	stateLock.Lock()
 	defer func() {
-		listLock.Unlock()
+		stateLock.Unlock()
 		signalPeerConnections()
 	}()
 
@@ -123,9 +137,9 @@ func removeTrack(t *webrtc.TrackLocalStaticRTP) {
 
 // signalPeerConnections updates each PeerConnection so that it is getting all the expected media tracks.
 func signalPeerConnections() {
-	listLock.Lock()
+	stateLock.Lock()
 	defer func() {
-		listLock.Unlock()
+		stateLock.Unlock()
 		dispatchKeyFrame()
 	}()
 
@@ -219,8 +233,8 @@ func signalPeerConnections() {
 
 // dispatchKeyFrame sends a keyframe to all PeerConnections, used everytime a new user joins the call.
 func dispatchKeyFrame() {
-	listLock.Lock()
-	defer listLock.Unlock()
+	stateLock.Lock()
+	defer stateLock.Unlock()
 
 	for i := range connections {
 		for _, receiver := range connections[i].peerConnection.GetReceivers() {
@@ -237,13 +251,47 @@ func dispatchKeyFrame() {
 	}
 }
 
+// removeUser safely removes a user and their connection
+func removeUser(userID uuid.UUID) {
+	stateLock.Lock()
+	defer stateLock.Unlock()
+
+	// Remove user from users map
+	delete(users, userID)
+
+	// Remove connection associated with this user
+	for i, conn := range connections {
+		if conn.userID == userID {
+			connections = slices.Delete(connections, i, i+1)
+			break
+		}
+	}
+
+	log.Infof("User %s removed, %d users remaining", userID, len(users))
+}
+
 // Handle incoming websockets.
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
+	// Rate limiting
+	if !connectionLimiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	// Check max connections
+	stateLock.RLock()
+	currentConnections := len(connections)
+	stateLock.RUnlock()
+
+	if currentConnections >= config.MaxConnections {
+		http.Error(w, "Server at capacity", http.StatusServiceUnavailable)
+		return
+	}
+
 	// Upgrade HTTP request to Websocket
 	unsafeConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("Failed to upgrade HTTP to Websocket: ", err)
-
 		return
 	}
 
@@ -274,8 +322,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pcState := peerConnectionState{peerConnection, c}
-
 	// Read current user
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -287,11 +333,26 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		Id:   uuid.New(),
 		Name: name,
 	}
-	users = append(users, *user)
 
-	payload, _ := json.Marshal(map[any]any {
+	// Create connection state with user ID
+	pcState := peerConnectionState{peerConnection, c, user.Id}
+
+	// Add user and connection with proper synchronization
+	stateLock.Lock()
+	users[user.Id] = user
+	connections = append(connections, pcState)
+	usersList := make([]*connectedUser, 0, len(users))
+	for _, u := range users {
+		usersList = append(usersList, u)
+	}
+	stateLock.Unlock()
+
+	// Ensure cleanup on disconnect
+	defer removeUser(user.Id)
+
+	payload, _ := json.Marshal(map[string]interface{}{
 		"id": user.Id,
-		"users": users,
+		"users": usersList,
 	})
 
 	// send the id back to the user
@@ -299,11 +360,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		Event: "id",
 		Data: string(payload),
 	})
-
-	// Add our new PeerConnection to global list
-	listLock.Lock()
-	connections = append(connections, pcState)
-	listLock.Unlock()
 
 	// Trickle ICE. Emit server candidate to client
 	peerConnection.OnICECandidate(func(i *webrtc.ICECandidate) {
