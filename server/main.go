@@ -32,9 +32,11 @@ var (
 
 	// Global state with proper synchronization
 	stateLock   sync.RWMutex
-	connections []peerConnectionState
+	connections []*peerConnectionState
 	trackLocals map[string]*webrtc.TrackLocalStaticRTP
-	users       map[uuid.UUID]*connectedUser // Changed to map for O(1) removal
+	users       map[uuid.UUID]*connectedUser
+	userTracks  map[uuid.UUID]string // userID -> trackID mapping
+	speakers    map[uuid.UUID]bool   // Active speakers only
 
 	// Rate limiting
 	connectionLimiter = rate.NewLimiter(rate.Every(time.Second), 10) // 10 connections per second
@@ -58,6 +60,14 @@ var (
 	}
 )
 
+type UserState string
+
+const (
+	LISTENING UserState = "listening"
+	SPEAKING  UserState = "speaking"
+	MUTED     UserState = "muted"
+)
+
 type websocketMessage struct {
 	Event string `json:"event"`
 	Data  string `json:"data"`
@@ -66,12 +76,13 @@ type websocketMessage struct {
 type peerConnectionState struct {
 	peerConnection *webrtc.PeerConnection
 	websocket      *threadSafeWriter
-	userID         uuid.UUID // Track which user owns this connection
+	userID         uuid.UUID
 }
 
 type connectedUser struct {
-	Id   uuid.UUID
-	Name string
+	Id    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	State UserState `json:"state"`
 }
 
 func main() {
@@ -85,6 +96,9 @@ func main() {
 	// Init other state
 	trackLocals = map[string]*webrtc.TrackLocalStaticRTP{}
 	users = map[uuid.UUID]*connectedUser{}
+	userTracks = map[uuid.UUID]string{}
+	speakers = map[uuid.UUID]bool{}
+	connections = []*peerConnectionState{}
 
 	// websocket handler
 	http.HandleFunc("/websocket", websocketHandler)
@@ -251,20 +265,78 @@ func dispatchKeyFrame() {
 	}
 }
 
+// broadcastUserStates sends updated user list to all connected clients
+func broadcastUserStates() {
+	usersList := make([]*connectedUser, 0, len(users))
+	for _, u := range users {
+		usersList = append(usersList, u)
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"users": usersList,
+	})
+
+	for _, conn := range connections {
+		conn.websocket.WriteJSON(&websocketMessage{
+			Event: "user_states_updated",
+			Data:  string(payload),
+		})
+	}
+}
+
+// toggleUserState switches user between listening and speaking
+func toggleUserState(userID uuid.UUID, newState UserState) {
+	stateLock.Lock()
+	defer stateLock.Unlock()
+
+	if user, exists := users[userID]; exists {
+		oldState := user.State
+		user.State = newState
+
+		// Update speakers map
+		if newState == SPEAKING {
+			speakers[userID] = true
+		} else {
+			delete(speakers, userID)
+			// He Stopped Yapping, Romove his track
+			if trackID, exists := userTracks[userID]; exists {
+				if track, exists := trackLocals[trackID]; exists {
+					removeTrack(track)
+				}
+				delete(userTracks, userID)
+			}
+		}
+
+		log.Infof("User %s state changed: %s -> %s", userID, oldState, newState)
+		
+		// Broadcast updated states to all users
+		broadcastUserStates()
+	}
+}
+
 // removeUser safely removes a user and their connection
 func removeUser(userID uuid.UUID) {
 	stateLock.Lock()
 	defer stateLock.Unlock()
 
-	// Remove user from users map
+	// Clean up user's track if they have one
+	if trackID, exists := userTracks[userID]; exists {
+		if track, exists := trackLocals[trackID]; exists {
+			removeTrack(track)
+		}
+		delete(userTracks, userID)
+	}
+
+	// Remove from speakers and users
+	delete(speakers, userID)
 	delete(users, userID)
 
-	// Remove connection associated with this user
+	// Remove connection
 	for i, conn := range connections {
 		if conn.userID == userID {
 			connections = slices.Delete(connections, i, i+1)
 			break
-		}
+			}
 	}
 
 	log.Infof("User %s removed, %d users remaining", userID, len(users))
@@ -330,17 +402,18 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &connectedUser{
-		Id:   uuid.New(),
-		Name: name,
+		Id:    uuid.New(),
+		Name:  name,
+		State: LISTENING, // Everyone starts listening
 	}
 
 	// Create connection state with user ID
 	pcState := peerConnectionState{peerConnection, c, user.Id}
 
-	// Add user and connection with proper synchronization
+	// Add user and connection
 	stateLock.Lock()
 	users[user.Id] = user
-	connections = append(connections, pcState)
+	connections = append(connections, &pcState)
 	usersList := make([]*connectedUser, 0, len(users))
 	for _, u := range users {
 		usersList = append(usersList, u)
@@ -399,9 +472,31 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	peerConnection.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		log.Infof("Got remote track: Kind=%s, ID=%s, PayloadType=%d", t.Kind(), t.ID(), t.PayloadType())
 
+		// Check if user is currently speaking
+		stateLock.RLock()
+		userID := pcState.userID
+		isSpeaking := speakers[userID]
+		stateLock.RUnlock()
+
+		if !isSpeaking {
+			log.Infof("Rejecting track from non-speaking user %s", userID)
+			return
+		}
+
 		// Create a track to fan out our incoming media to all peers
 		trackLocal := addTrack(t)
-		defer removeTrack(trackLocal)
+		
+		// Track ownership
+		stateLock.Lock()
+		userTracks[userID] = t.ID()
+		stateLock.Unlock()
+		
+		defer func() {
+			removeTrack(trackLocal)
+			stateLock.Lock()
+			delete(userTracks, userID)
+			stateLock.Unlock()
+		}()
 
 		buf := make([]byte, 1500)
 		rtpPkt := &rtp.Packet{}
@@ -414,7 +509,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 
 			if err = rtpPkt.Unmarshal(buf[:i]); err != nil {
 				log.Errorf("Failed to unmarshal incoming RTP packet: %v", err)
-
 				return
 			}
 
@@ -436,10 +530,10 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		Data:  user.Id.String(),
 	})
 
-	handleIncomingWebsocketMessages(peerConnection, c)
+	handleIncomingWebsocketMessages(peerConnection, c, &pcState)
 }
 
-func handleIncomingWebsocketMessages(pc *webrtc.PeerConnection, c *threadSafeWriter) {
+func handleIncomingWebsocketMessages(pc *webrtc.PeerConnection, c *threadSafeWriter, pcState *peerConnectionState) {
 	for {
 		_, raw, err := c.ReadMessage()
 		if err != nil {
@@ -525,6 +619,39 @@ func handleIncomingWebsocketMessages(pc *webrtc.PeerConnection, c *threadSafeWri
 			}); err != nil {
 				log.Errorf("Failed to write JSON: %v", err)
 				return
+			}
+
+		// User toggles between listening and speaking
+		case "toggle_speaking":
+			userID := pcState.userID
+			stateLock.RLock()
+			user := users[userID]
+			currentState := user.State
+			stateLock.RUnlock()
+			
+			// Toggle between listening and speaking
+			var newState UserState
+			if currentState == LISTENING || currentState == MUTED {
+				newState = SPEAKING
+			} else {
+				newState = LISTENING
+			}
+			
+			toggleUserState(userID, newState)
+
+		// User mutes/unmutes while speaking
+		case "toggle_mute":
+			userID := pcState.userID
+			stateLock.RLock()
+			user := users[userID]
+			currentState := user.State
+			stateLock.RUnlock()
+			
+			// Only toggle mute if user is speaking
+			if currentState == SPEAKING {
+				toggleUserState(userID, MUTED)
+			} else if currentState == MUTED {
+				toggleUserState(userID, SPEAKING)
 			}
 
 		default:
