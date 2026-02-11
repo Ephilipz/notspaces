@@ -1,116 +1,241 @@
-.header {
-	text-align: center;
-	margin-bottom: 10vh;
-}
-
-.header hr {
-	margin: 2em;
-}
-
-.header h1 {
-	font-size: 5em;
-	margin: 0;
-}
-
-.header h1 strong {
-	color: var(--rose);
-}
-
-.header h2 {
-	font-weight: 100;
-	color: var(--muted);
-}
-
-.header h2 strong {
-	color: var(--foam);
-}
-
-.cardWrapper {
-	width: fit-content;
-	margin: auto;
-}
-
-.playingCard {
-	border: 2px solid var(--rose);
-	background: linear-gradient(var(--overlay), var(--pine));
-	height: 40vh;
-	width: 350px;
-	max-width: 80vw;
-	margin: auto;
-	border-radius: 1em;
-	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 6px 6px rgba(0, 0, 0, 0.15);
-	overflow: hidden;
-	position: relative;
-	color: var(--gold);
+.wackyLand {
+	min-height: 100vh;
 	display: flex;
+	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	padding: 2rem;
+	position: relative;
+	overflow: hidden;
 }
 
-.cardWrapper:hover .playingCard {
-	color: var(--foam);
-	background: linear-gradient(var(--overlay), var(--love));
-	cursor: pointer;
-}
-
-.cardWrapper:hover p.indicator {
-	opacity: 1;
-	color: var(--love);
-	transform: translateY(0);
-	z-index: 10;
-}
-
-p.indicator {
-	transition: all 0.5s ease-in-out;
-	opacity: 0.2;
-	margin: 0;
-	color: var(--gold);
-	font-size: 3em;
-	font-weight: light;
-	text-align: center;
-	margin: auto;
-	margin-bottom: 10px;
-	transform: translateY(100%);
-	z-index: -10;
-}
-
-.playingCard svg * {
-	color: currentColor;
-	stroke: currentColor;
-}
-
-.playingCard .center svg {
-	height: 100px;
-	width: 100px;
-}
-
-.playingCard .corner {
+.gopherFloat {
 	position: absolute;
+	top: 5%;
+	right: 10%;
+	animation: gopherBob 4s ease-in-out infinite;
+	z-index: 0;
+}
+
+@keyframes gopherBob {
+	0%, 100% { transform: translateY(0) rotate(-5deg); }
+	50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+.gopher {
+	width: 180px;
+	height: auto;
+	filter: drop-shadow(6px 6px 0px rgba(0,0,0,0.2));
+}
+
+.header {
+	text-align: center;
+	position: relative;
+	z-index: 1;
+	margin-bottom: 3rem;
+}
+
+.wackyTitle {
+	font-family: 'Bangers', cursive;
+	font-size: 6rem;
+	color: #1f2937;
+	text-shadow: 
+		4px 4px 0px #fb7185,
+		8px 8px 0px #a855f7;
+	letter-spacing: 0.15em;
+	transform: rotate(-2deg);
+	animation: titleWobble 3s ease-in-out infinite;
+	margin-bottom: 1rem;
+}
+
+@keyframes titleWobble {
+	0%, 100% { transform: rotate(-2deg) scale(1); }
+	50% { transform: rotate(2deg) scale(1.02); }
+}
+
+.tagline {
+	font-family: 'Fredoka', sans-serif;
+	font-size: 1.5rem;
+	color: #4b5563;
+	font-style: italic;
+	position: relative;
+	display: inline-block;
+	margin-bottom: 3rem;
+}
+
+.tagline::before {
+	content: '"';
+	color: #fb7185;
+	font-size: 2rem;
+	font-family: 'Bangers', cursive;
+}
+
+.tagline::after {
+	content: '"';
+	color: #fb7185;
+	font-size: 2rem;
+	font-family: 'Bangers', cursive;
+}
+
+.nameSection {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 15px;
-	line-height: 1;
-	gap: 5px;
+	gap: 1rem;
 }
 
-.playingCard .corner span {
-	font-weight: bold;
-	font-size: x-large;
+.nameLabel {
+	font-family: 'Bangers', cursive;
+	font-size: 1rem;
+	color: #6b7280;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
-.playingCard .corner svg {
-	width: 1.8em;
-	height: 1.8em;
+.nameSection input {
+	width: 350px;
+	max-width: 80vw;
 }
 
-.playingCard .topLeft {
+.enterSection {
+	text-align: center;
+	animation: fadeInUp 0.5s ease-out;
+	z-index: 1;
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.enterLink {
+	text-decoration: none;
+}
+
+.enterButton {
+	font-family: 'Bangers', cursive;
+	font-size: 2rem;
+	background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+	color: #fff;
+	border: 4px solid #1f2937;
+	padding: 1.5rem 3rem;
+	border-radius: 50px;
+	cursor: pointer;
+	box-shadow: 8px 8px 0px #1f2937;
+	transition: all 0.15s;
+	display: inline-flex;
+	align-items: center;
+	gap: 1rem;
+	letter-spacing: 0.1em;
+	animation: buttonPulse 2s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+	0%, 100% { transform: scale(1); }
+	50% { transform: scale(1.05); }
+}
+
+.enterButton:hover {
+	transform: translate(-4px, -4px);
+	box-shadow: 12px 12px 0px #1f2937;
+	animation: none;
+}
+
+.enterButton:active {
+	transform: translate(4px, 4px);
+	box-shadow: 4px 4px 0px #1f2937;
+}
+
+.enterArrow {
+	background: #fff;
+	color: #1f2937;
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 3px solid #1f2937;
+	transition: transform 0.3s;
+}
+
+.enterButton:hover .enterArrow {
+	transform: translateX(5px) rotate(15deg);
+}
+
+.enterHint {
+	font-family: 'Fredoka', sans-serif;
+	font-size: 1rem;
+	color: #6b7280;
+	margin-top: 1rem;
+	font-weight: 600;
+}
+
+.waitingSection {
+	text-align: center;
+	margin-top: 2rem;
+	z-index: 1;
+}
+
+.waitingBlob {
+	font-size: 4rem;
+	margin-bottom: 1rem;
+	animation: sadFloat 3s ease-in-out infinite;
+}
+
+@keyframes sadFloat {
+	0%, 100% { transform: translateY(0) rotate(-5deg); }
+	50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.waitingSection p {
+	font-family: 'Fredoka', sans-serif;
+	font-size: 1.2rem;
+	color: #6b7280;
+}
+
+.decorations {
+	position: fixed;
 	top: 0;
 	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	z-index: 0;
 }
 
-.playingCard .btmRight {
-	bottom: 0;
-	right: 0;
-	transform: rotate(180deg);
+.star, .sparkle, .circle {
+	position: absolute;
+	font-size: 2rem;
+	color: #fbbf24;
+	animation: twinkle 3s ease-in-out infinite;
+}
+
+.star {
+	top: 15%;
+	left: 10%;
+	animation-delay: 0s;
+}
+
+.sparkle {
+	top: 25%;
+	right: 15%;
+	animation-delay: 1s;
+}
+
+.circle {
+	bottom: 20%;
+	left: 15%;
+	animation-delay: 2s;
+}
+
+@keyframes twinkle {
+	0%, 100% { opacity: 0.3; transform: scale(0.8); }
+	50% { opacity: 1; transform: scale(1.2); }
 }

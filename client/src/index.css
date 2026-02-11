@@ -1,27 +1,6 @@
-/*! modern-normalize v3.0.1 | MIT License | https://github.com/sindresorhus/modern-normalize */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Bangers&family=Fredoka:wght@400;600;700&display=swap');
 
-/*
-Fonts
-========
-*/
-@font-face {
-	font-family: "manrope";
-	src: url('assets/fonts/manrope/Manrope-Regular.woff2'),
-		url('assets/fonts/manrope/Manrope-Medium.woff2'),
-		url('assets/fonts/manrope/Manrope-Light.woff2'),
-		url('assets/fonts/manrope/Manrope-ExtraLight.woff2'),
-		url('assets/fonts/manrope/Manrope-Bold.woff2'),
-		url('assets/fonts/manrope/Manrope-ExtraBold.woff2');
-}
-
-/*
-Document
-========
-*/
-
-/**
-Use a better box model (opinionated).
-*/
+/* FUN GLOBAL STYLES - WACKY CARTOONY AESTHETIC */
 
 *,
 ::before,
@@ -29,364 +8,359 @@ Use a better box model (opinionated).
 	box-sizing: border-box;
 }
 
-/**
-1. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
-2. Correct the line height in all browsers.
-3. Prevent adjustments of font size after orientation changes in iOS.
-4. Use a more readable tab size (opinionated).
-*/
-
 html {
-	font-family:
-		manrope,
-		'Segoe UI',
-		Roboto,
-		Helvetica,
-		Arial,
-		sans-serif,
-		'Apple Color Emoji',
-		'Segoe UI Emoji';
-	/* 1 */
+	font-family: 'Fredoka', sans-serif;
 	line-height: 1.15;
-	/* 2 */
 	-webkit-text-size-adjust: 100%;
-	/* 3 */
 	tab-size: 4;
-	/* 4 */
-
-	/* theme */
-	background: var(--bg);
-	color: var(--text);
 }
-
-/*
-Sections
-========
-*/
-
-/**
-Remove the margin in all browsers.
-*/
 
 body {
-	height: 100vh;
+	min-height: 100vh;
 	margin: 0;
-	padding: 1em;
-}
-
-/*
-Text-level semantics
-====================
-*/
-
-/**
-Add the correct font weight in Chrome and Safari.
-*/
-
-b,
-strong {
-	font-weight: bolder;
-}
-
-/**
-1. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
-2. Correct the odd 'em' font sizing in all browsers.
-*/
-
-code,
-kbd,
-samp,
-pre {
-	font-family:
-		ui-monospace,
-		SFMono-Regular,
-		Consolas,
-		'Liberation Mono',
-		Menlo,
-		monospace;
-	/* 1 */
-	font-size: 1em;
-	white-space: pre;
-	/* 2 */
-}
-
-h1 strong {
-	color: var(--foam);
-}
-
-.muted {
-	color: var(--muted);
-}
-
-/**
-Add the correct font size in all browsers.
-*/
-
-small {
-	font-size: 80%;
-}
-
-/**
-Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
-*/
-
-sub,
-sup {
-	font-size: 75%;
-	line-height: 0;
-	position: relative;
-	vertical-align: baseline;
-}
-
-sub {
-	bottom: -0.25em;
-}
-
-sup {
-	top: -0.5em;
-}
-
-/*
-Tabular data
-============
-*/
-
-/**
-Correct table border color inheritance in Chrome and Safari. (https://issues.chromium.org/issues/40615503, https://bugs.webkit.org/show_bug.cgi?id=195016)
-*/
-
-table {
-	border-color: currentcolor;
-}
-
-/*
-Forms
-=====
-*/
-
-/**
-1. Change the font styles in all browsers.
-2. Remove the margin in Firefox and Safari.
-*/
-
-button,
-input,
-optgroup,
-select,
-textarea {
-	font-family: inherit;
-	/* 1 */
-	font-size: 100%;
-	/* 1 */
-	line-height: 1.15;
-	/* 1 */
-	margin: 0;
-	/* 2 */
-}
-
-input {
-	background-color: var(--overlay);
-	border: none;
-	padding: 0.5em;
-	border-radius: 5px;
-	color: var(--text);
-	outline: none;
-}
-
-input:focus-visible,
-input:focus {
-	outline: 2px solid var(--iris);
-}
-
-hr {
-	background: var(--border);
-	border: none;
-	height: 1px;
-}
-
-/**
-Correct the inability to style clickable types in iOS and Safari.
-*/
-
-button,
-[type='button'],
-[type='reset'],
-[type='submit'] {
-	-webkit-appearance: button;
-	appearance: button;
-}
-
-/**
-Style buttons
-**/
-.btn {
-	padding: 0.5em 1em;
-	border-radius: 0.2em;
-
-	/* theme */
-	border: none;
-	border-bottom: 1px solid var(--rose);
-	background: var(--surface);
-	color: var(--rose);
-	transition: all 0.4s ease-in-out;
-
-	cursor: pointer;
-}
-
-.btn.primary {
-	border-bottom: 2px solid var(--love);
-	background: var(--rose);
-	color: var(--bg);
-}
-
-.btn:hover {
-	background-color: var(--rose);
-	color: var(--bg);
-}
-
-
-/**
-Remove the padding so developers are not caught out when they zero out 'fieldset' elements in all browsers.
-*/
-
-legend {
 	padding: 0;
+	background: #fef3c7;
+	background-image:
+		radial-gradient(circle at 20% 50%, rgba(251, 113, 133, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 60% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+		radial-gradient(circle at 10% 10%, rgba(34, 197, 94, 0.2) 0%, transparent 40%);
+	position: relative;
+	overflow-x: hidden;
 }
 
-/**
-Add the correct vertical alignment in Chrome and Firefox.
-*/
-
-progress {
-	vertical-align: baseline;
+body::before {
+	content: '';
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+	pointer-events: none;
+	z-index: -1;
 }
 
-/**
-Correct the cursor style of increment and decrement buttons in Safari.
-*/
-
-::-webkit-inner-spin-button,
-::-webkit-outer-spin-button {
-	height: auto;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: 'Bangers', cursive;
+	letter-spacing: 0.05em;
+	margin: 0;
 }
 
-/**
-1. Correct the odd appearance in Chrome and Safari.
-2. Correct the outline style in Safari.
-*/
-
-[type='search'] {
-	-webkit-appearance: textfield;
-	/* 1 */
-	outline-offset: -2px;
-	/* 2 */
+h1 {
+	font-size: 3rem;
+	color: #1f2937;
+	text-shadow: 3px 3px 0px #fb7185;
 }
 
-/**
-Remove the inner padding in Chrome and Safari on macOS.
-*/
-
-::-webkit-search-decoration {
-	-webkit-appearance: none;
+h2 {
+	font-size: 2.5rem;
+	color: #1f2937;
+	text-shadow: 2px 2px 0px #a855f7;
 }
 
-/**
-1. Correct the inability to style clickable types in iOS and Safari.
-2. Change font properties to 'inherit' in Safari.
-*/
-
-::-webkit-file-upload-button {
-	-webkit-appearance: button;
-	/* 1 */
-	font: inherit;
-	/* 2 */
+p {
+	font-size: 1.1rem;
+	color: #374151;
+	line-height: 1.6;
 }
 
-/*
-Interactive
-===========
-*/
-
-/*
-Add the correct display in Chrome and Safari.
-*/
-
-summary {
-	display: list-item;
+/* BUTTONS */
+button,
+.btn {
+	font-family: 'Bangers', cursive;
+	font-size: 1.3rem;
+	background: #1f2937;
+	color: #fff;
+	border: 4px solid #1f2937;
+	padding: 0.8rem 2rem;
+	border-radius: 50px;
+	cursor: pointer;
+	box-shadow: 6px 6px 0px #fb7185;
+	transition: all 0.15s;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
 
-/*
-UI Elements
-===========
-*/
+button:hover,
+.btn:hover {
+	transform: translate(-2px, -2px);
+	box-shadow: 8px 8px 0px #fb7185;
+}
+
+button:active,
+.btn:active {
+	transform: translate(4px, 4px);
+	box-shadow: 2px 2px 0px #fb7185;
+}
+
+button.primary,
+.btn.primary {
+	background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+	border-color: #1f2937;
+	box-shadow: 6px 6px 0px #1f2937;
+}
+
+button.primary:hover,
+.btn.primary:hover {
+	box-shadow: 8px 8px 0px #1f2937;
+}
+
+button.primary:active,
+.btn.primary:active {
+	box-shadow: 2px 2px 0px #1f2937;
+}
+
+/* INPUTS */
+input,
+textarea {
+	font-family: 'Fredoka', sans-serif;
+	font-size: 1.2rem;
+	background: #fff;
+	border: 4px solid #1f2937;
+	padding: 1rem 1.5rem;
+	border-radius: 16px;
+	color: #1f2937;
+	outline: none;
+	box-shadow: 6px 6px 0px #1f2937;
+	transition: all 0.2s;
+	width: 100%;
+	max-width: 400px;
+}
+
+input:focus,
+textarea:focus {
+	transform: translate(-2px, -2px);
+	box-shadow: 8px 8px 0px #1f2937;
+	border-color: #fb7185;
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: #9ca3af;
+	font-style: italic;
+}
+
+/* CARDS */
+.card {
+	background: #fff;
+	border: 4px solid #1f2937;
+	border-radius: 20px;
+	padding: 2rem;
+	box-shadow: 8px 8px 0px #3b82f6;
+	transition: all 0.2s;
+}
+
+.card:hover {
+	transform: translate(-4px, -4px);
+	box-shadow: 12px 12px 0px #3b82f6;
+}
+
+/* BADGES */
+.badge {
+	font-family: 'Bangers', cursive;
+	font-size: 0.9rem;
+	background: #fbbf24;
+	color: #1f2937;
+	padding: 0.3rem 0.8rem;
+	border-radius: 20px;
+	border: 3px solid #1f2937;
+	display: inline-block;
+	box-shadow: 3px 3px 0px #1f2937;
+}
+
+/* PILL */
 .pill {
-	display: flex;
+	font-family: 'Fredoka', sans-serif;
+	font-weight: 600;
+	display: inline-flex;
 	align-items: center;
-	border-radius: 1em;
-	padding: 0.5em 0.7em;
-	width: fit-content;
-	border: 1px dashed currentColor;
-	gap: 0.5em;
+	gap: 0.5rem;
+	background: #fff;
+	border: 3px solid #1f2937;
+	padding: 0.5rem 1rem;
+	border-radius: 50px;
+	box-shadow: 4px 4px 0px #22c55e;
 }
 
-.pill.info {
-	color: var(--iris);
+/* HR */
+hr {
+	border: none;
+	height: 4px;
+	background: repeating-linear-gradient(90deg,
+			#1f2937,
+			#1f2937 10px,
+			transparent 10px,
+			transparent 20px);
+	margin: 2rem auto;
+	max-width: 200px;
 }
 
-.pill.attention {
-	color: var(--gold);
+/* UTILITIES */
+.wacky-container {
+	min-height: 100vh;
+	padding: 2rem;
+	position: relative;
 }
 
-.pill.success {
-	color: var(--foam);
+.wacky-title {
+	font-family: 'Bangers', cursive;
+	font-size: 4rem;
+	color: #1f2937;
+	text-shadow:
+		4px 4px 0px #fb7185,
+		8px 8px 0px #a855f7;
+	transform: rotate(-2deg);
+	letter-spacing: 0.1em;
+	display: inline-block;
+	animation: wobble 3s ease-in-out infinite;
 }
 
-.glow {
-	box-shadow: var(--rose) 0 0 4em 0.4em;
+@keyframes wobble {
+
+	0%,
+	100% {
+		transform: rotate(-2deg) scale(1);
+	}
+
+	50% {
+		transform: rotate(2deg) scale(1.02);
+	}
 }
 
-.row {
+.floating {
+	animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+
+	0%,
+	100% {
+		transform: translateY(0) rotate(-2deg);
+	}
+
+	50% {
+		transform: translateY(-10px) rotate(2deg);
+	}
+}
+
+.bouncy {
+	animation: bounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes bounce {
+	from {
+		transform: translateY(0);
+	}
+
+	to {
+		transform: translateY(-5px);
+	}
+}
+
+/* BLOB SHAPES */
+.blob {
+	border-radius: 50% 40% 60% 40% / 40% 50% 40% 60%;
+}
+
+.blob-alt {
+	border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+}
+
+.blob-alt2 {
+	border-radius: 55% 45% 50% 50% / 45% 55% 45% 55%;
+}
+
+/* HIDDEN */
+.hidden {
+	display: none;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}
+
+/* FORM STYLES */
+.form-group {
+	margin-bottom: 1.5rem;
 	display: flex;
-	flex-direction: row;
-	gap: 1em;
+	flex-direction: column;
 	align-items: center;
 }
 
-.hcenter {
-	justify-content: center;
+.form-label {
+	font-family: 'Bangers', cursive;
+	font-size: 1.2rem;
+	color: #1f2937;
+	margin-bottom: 0.5rem;
+	letter-spacing: 0.05em;
 }
 
-.pulse {
-  animation: pulse-animation 2s infinite;
-  box-shadow: 0px 0px 0.01px 0.01px currentColor;
-  border-radius: 50%;
+/* ANIMATION UTILITIES */
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
 }
 
-@keyframes pulse-animation {
-  0% {
-    box-shadow: 0 0 0 0px color-mix(currentcolor, transparent, 20%, 80%)
-  }
-  100% {
-    box-shadow: 0 0 0 10px transparent
-  }
+@keyframes shake {
+
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+
+	25% {
+		transform: translateX(-5px);
+	}
+
+	75% {
+		transform: translateX(5px);
+	}
 }
 
-/*
-Theme
-*/
+.shake:hover {
+	animation: shake 0.3s ease-in-out;
+}
 
-:root {
-	--bg: #232136;
-	--surface: #2a273f;
-	--overlay: #393552;
-	--muted: #6e6a86;
-	--subtle: #908caa;
-	--text: #e0def4;
-	--love: #eb6f92;
-	--gold: #f6c177;
-	--rose: #ea9a97;
-	--pine: #3e8fb0;
-	--foam: #9ccfd8;
-	--iris: #c4a7e7;
-	--border: #56526e;
+/* FOCUS STYLES */
+*:focus-visible {
+	outline: 4px dashed darksalmon;
+	outline-offset: 4px;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar {
+	width: 12px;
+}
+
+::-webkit-scrollbar-track {
+	background: #fef3c7;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #1f2937;
+	border-radius: 10px;
+	border: 3px solid #fef3c7;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #fb7185;
 }

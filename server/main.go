@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/logging"
 	"github.com/pion/rtcp"
-	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 )
 
@@ -58,6 +57,7 @@ type websocketMessage struct {
 type peerConnectionState struct {
 	peerConnection *webrtc.PeerConnection
 	websocket      *threadSafeWriter
+	userId         uuid.UUID
 }
 
 type connectedUser struct {
@@ -217,6 +217,23 @@ func signalPeerConnections() {
 	}
 }
 
+// broadcastUserList sends the current user list to all connected clients
+func broadcastUserList() {
+	listLock.Lock()
+	defer listLock.Unlock()
+
+	payload, _ := json.Marshal(map[string]any{
+		"users": users,
+	})
+
+	for _, conn := range connections {
+		conn.websocket.WriteJSON(&websocketMessage{
+			Event: "users",
+			Data:  string(payload),
+		})
+	}
+}
+
 // dispatchKeyFrame sends a keyframe to all PeerConnections, used everytime a new user joins the call.
 func dispatchKeyFrame() {
 	listLock.Lock()
@@ -274,8 +291,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pcState := peerConnectionState{peerConnection, c}
-
 	// Read current user
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -289,21 +304,15 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	users = append(users, *user)
 
-	payload, _ := json.Marshal(map[any]any {
-		"id": user.Id,
-		"users": users,
-	})
+	pcState := peerConnectionState{peerConnection, c, user.Id}
 
-	// send the id back to the user
-	c.WriteJSON(&websocketMessage{
-		Event: "id",
-		Data: string(payload),
-	})
-
-	// Add our new PeerConnection to global list
+	// Add our new PeerConnection to global list first
 	listLock.Lock()
 	connections = append(connections, pcState)
 	listLock.Unlock()
+
+	// Broadcast user list to all connections (including new one)
+	broadcastUserList()
 
 	// Trickle ICE. Emit server candidate to client
 	peerConnection.OnICECandidate(func(i *webrtc.ICECandidate) {
@@ -327,7 +336,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 
-	// If PeerConnection is closed remove it from global list
+	// If PeerConnection is closed remove it from global list and user list
 	peerConnection.OnConnectionStateChange(func(p webrtc.PeerConnectionState) {
 		switch p {
 		case webrtc.PeerConnectionStateFailed:
@@ -335,50 +344,21 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 				log.Errorf("Failed to close PeerConnection: %v", err)
 			}
 		case webrtc.PeerConnectionStateClosed:
+			// Remove user from the list
+			for i, u := range users {
+				if u.Id == user.Id {
+					users = slices.Delete(users, i, i+1)
+					break
+				}
+			}
+			broadcastUserList()
 			signalPeerConnections()
 		default:
 		}
 	})
 
-	peerConnection.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
-		log.Infof("Got remote track: Kind=%s, ID=%s, PayloadType=%d", t.Kind(), t.ID(), t.PayloadType())
-
-		// Create a track to fan out our incoming media to all peers
-		trackLocal := addTrack(t)
-		defer removeTrack(trackLocal)
-
-		buf := make([]byte, 1500)
-		rtpPkt := &rtp.Packet{}
-
-		for {
-			i, _, err := t.Read(buf)
-			if err != nil {
-				return
-			}
-
-			if err = rtpPkt.Unmarshal(buf[:i]); err != nil {
-				log.Errorf("Failed to unmarshal incoming RTP packet: %v", err)
-
-				return
-			}
-
-			rtpPkt.Extension = false
-			rtpPkt.Extensions = nil
-
-			if err = trackLocal.WriteRTP(rtpPkt); err != nil {
-				return
-			}
-		}
-	})
-
 	// Signal for the new PeerConnection
 	signalPeerConnections()
-
-	// respond with its id
-	c.WriteJSON(&websocketMessage{
-		Event: "id",
-		Data:  user.Id.String(),
-	})
 
 	handleIncomingWebsocketMessages(peerConnection, c)
 }

@@ -1,10 +1,17 @@
-# !spaces
+# notspaces
 
-## Frontend
-solidjs app which you run using `npm run dev` after installing with `npm i`.
+Twitter Spaces clone for live audio chat rooms.
 
-## Backend
-go web server. Run using `run main.go`.
+## Features
 
-## Contribution
-I don't care as long as it works. Clean code doesn't exist here.
+- Create and join audio rooms
+- Host controls (mute, remove speakers)
+- Speaker requests and approvals
+- Real-time audio streaming
+- Room discovery and search
+
+## Components
+
+**Frontend**: SolidJS app. Run with `npm i && npm run dev`.
+
+**Backend**: Go server with WebSocket support for real-time audio. Run with `go run main.go`.

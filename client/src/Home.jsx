@@ -1,67 +1,79 @@
 import { A } from '@solidjs/router'
-import styles from './Home.module.css'
-import { MouseTilt } from './MouseTilt'
 import { createSignal, Show } from 'solid-js'
+import styles from './Home.module.css'
 
 export default function Home() {
 	const [name, setName] = createSignal(localStorage.getItem('name') || null)
 	return (
-		<div>
-			<header class={styles.header}>
-				<h1>
-					This is
-					<strong> notspaces</strong>
-				</h1>
-				<h2>
-					You can speak, but don't
-					{' '}
-					<strong>yap</strong>
-					{' '}
-					too much.
-				</h2>
-				<hr />
-				<input
-					autofocus
-					placeholder="Enter your name"
-					value={name()}
-					onInput={(e) => {
-						setName(e.target.value)
-						localStorage.setItem('name', e.target.value)
-					}}
+		<div class={styles.wackyLand}>
+			<div class={styles.gopherFloat}>
+				<img
+					src="/src/assets/pion-gopher-webrtc.png"
+					alt="WebRTC Gopher mascot"
+					class={styles.gopher}
 				/>
+			</div>
+
+			<header class={styles.header}>
+				<h1 class={styles.wackyTitle}>
+					NOTSPACES
+				</h1>
+				<p class={styles.tagline}>
+					talk into the void (with friends)
+				</p>
+
+				<div class={styles.nameSection}>
+					<label class={styles.nameLabel} for="name-input">
+						HELLO MY NAME IS
+					</label>
+					<input
+						id="name-input"
+						autofocus
+						placeholder="type your name here..."
+						value={name()}
+						onInput={(e) => {
+							setName(e.target.value)
+							localStorage.setItem('name', e.target.value)
+						}}
+					/>
+				</div>
 			</header>
+
 			<Show when={name() && name().length > 2}>
-				<MouseTilt>
-					<A href="/room" style={{ 'text-decoration': 'none' }} aria-disabled={!name()}>
-						<div class={styles.cardWrapper}>
-							<p class={styles.indicator}>Enter</p>
-							<div class={styles.playingCard}>
-								<div class={`${styles.corner} ${styles.topLeft}`}>
-									<span>A</span>
-									<MicSVG />
-								</div>
-								<div class={styles.center}>
-									<MicSVG />
-								</div>
-								<div class={`${styles.corner} ${styles.btmRight}`}>
-									<span>A</span>
-									<MicSVG />
-								</div>
+				<div class={styles.enterSection}>
+					<A href="/room" class={styles.enterLink}>
+						<div class={styles.enterButton}>
+							<span class={styles.enterText}>ENTER THE ROOM</span>
+							<div class={styles.enterArrow}>
+								<ArrowSVG />
 							</div>
 						</div>
 					</A>
-				</MouseTilt>
+					<p class={styles.enterHint}>click to start yapping!</p>
+				</div>
 			</Show>
+
+			<Show when={!name() || name().length <= 2}>
+				<div class={styles.waitingSection}>
+					<div class={styles.waitingBlob}>(◉︵◉)</div>
+					<p>waiting for you to type a name...</p>
+				</div>
+			</Show>
+
+			<div class={styles.decorations}>
+				<div class={styles.star}>★</div>
+				<div class={styles.sparkle}>✦</div>
+				<div class={styles.circle}>●</div>
+			</div>
 		</div>
 	)
 }
 
-function MicSVG() {
+function ArrowSVG() {
 	return (
-		<svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<rect x="8" y="2" width="8" height="13" rx="4" fill="currentcolor" />
-			<path d="M5 11C5 12.8565 5.7375 14.637 7.05025 15.9497C8.36301 17.2625 10.1435 18 12 18C13.8565 18 15.637 17.2625 16.9497 15.9497C18.2625 14.637 19 12.8565 19 11" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill-rule="inherit" />
-			<path d="M12 21V19" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+		<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+			<title>Arrow pointing right</title>
+			<path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 		</svg>
 	)
 }
